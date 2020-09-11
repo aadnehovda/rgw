@@ -1,0 +1,31 @@
+version: '3.7'
+
+services:
+  radosgw:
+    image: ahovda/ceph-rgw
+    command: --keyring /run/secrets/keyring -d --conf /dev/zero
+    user: 167:167
+    environment:
+      RGW_ID: rgw.{{.Service.Name}}{{.Task.Slot}}
+      HOST_RULE:
+    deploy:
+      labels:
+        traefik.http.routers.ceph-radosgw.entrypoints: web-secure
+        traefik.http.routers.ceph-radosgw.rule: Host("${HOST_RULE}")
+        traefik.http.services.ceph-radosgw.loadbalancer.server.port: '7480'
+    networks:
+      proxy:
+    secrets:
+      - source: keyring
+        uid: "167"
+        gid: "167"
+
+secrets:
+  keyring:
+    external: true
+    name: ceph_radosgw.keyring
+
+networks:
+  proxy:
+    external: true
+
